@@ -1,13 +1,19 @@
-import { Injectable, CanActivate, ExecutionContext, BadRequestException } from "@nestjs/common";
-import { Observable } from "rxjs";
+import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { UserRoles } from "../db/enum/user_roles.enum";
+import { ROLES_KEY } from "../decorators/auth.decorator";
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class RolesGuard implements CanActivate {
+    constructor(private reflector:Reflector){}
     canActivate(context: ExecutionContext): boolean {
-        const request = context.switchToHttp().getRequest()
-        const isAuth = request.headers.authorization === "token"
-        if(!isAuth){
-            throw new BadRequestException("you didn't log in")
+        const requiredRoles = this.reflector.getAllAndOverride<UserRoles[]>(
+            ROLES_KEY,
+            [context.getHandler(), context.getClass()],
+        )
+        if(!requiredRoles || requiredRoles.length === 0){
+            return true
         }
-        return isAuth
+        const {user} = context.switchToHttp().getRequest()
+       return requiredRoles.includes(user.role)
     }
 }
