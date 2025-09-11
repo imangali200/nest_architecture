@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './core/db/entities/user.entity';
 import { AuthModule } from './features/auth/auth.module';
+import { AuthEntity } from './core/db/entities/auth.entity';
 
 @Module({
   imports: [UserModule,
@@ -19,7 +20,7 @@ import { AuthModule } from './features/auth/auth.module';
         username:configService.get('DB_USERNAME'),
         password:configService.get('DB_PASSWORD'),
         database:configService.get('DB_DATABASE'),
-        entities:[User],
+        entities:[User,AuthEntity],
         synchronize:true
       }),
       inject:[ConfigService]

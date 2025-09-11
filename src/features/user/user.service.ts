@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../core/db/entities/user.entity';
-import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user-dto';
+import { Auth, Repository } from 'typeorm';
+import { CreateUserDto } from './dto/user-dto';
 import { RegisterDto } from '../auth/dto/register.dto';
+import { AuthEntity } from 'src/core/db/entities/auth.entity';
 
 @Injectable()
 export class UserService {
@@ -11,29 +12,32 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-
+    @InjectRepository(AuthEntity)
+    private readonly authRepository:Repository<AuthEntity>
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const newUser = this.userRepository.create(createUserDto)
-    return await this.userRepository.save(newUser)
+    const userData = this.userRepository.create(createUserDto)
+    return await this.userRepository.save(userData)
   }
-  async delete(id:number){
-    await this.userRepository.delete(id)
-    return{message:'deleted'}
+  async delete(id:string){
+    
+    const deleted = await this.userRepository.delete(id)
+    if (!deleted) throw new BadRequestException("not deleted")
+    return 
   }
 
   async findByEmail(email:string){
-    return this.userRepository.findOne({
+    return this.authRepository.findOne({
       where:{email}
     })
   }
   async createOne(registerDto:RegisterDto & {hashPassword:string}){
-    const newUser = this.userRepository.create({
+    const newUser = this.authRepository.create({
       ...registerDto,
       password:registerDto.hashPassword
     })
 
-    return await this.userRepository.save(newUser)
+    return await this.authRepository.save(newUser)
   }
 }
